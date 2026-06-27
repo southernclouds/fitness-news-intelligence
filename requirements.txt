@@ -3,3 +3,4 @@ feedparser
 google-generativeai
 pandas
 plotly
+openpyxl
