@@ -2,7 +2,7 @@ name: Daily Industry Trend Intelligence
 
 on:
   schedule:
-    # 日本時間の朝7:05（世界標準時の22:05）に毎日実行（少し時間をずらしています）
+    # 日本時間の朝7:05（世界標準時の22:05）に毎日実行
     - cron: '5 22 * * *'
   workflow_dispatch: # 手動テストボタン
 
@@ -34,3 +34,20 @@ jobs:
         git add archive_app.csv
         git diff --cached --quiet || git commit -m "毎朝の業界トレンドニュース蓄積 [skip ci]"
         git push
+
+    - name: 6. 分析結果をメールで送信
+      uses: dawidd6/action-send-mail@v3
+      with:
+        server_address: smtp.gmail.com
+        server_port: 465
+        username: southernclouds1976@gmail.com
+        password: ${{ secrets.EMAIL_PASSWORD }}
+        subject: "【毎朝自動配信】業界トレンドニュース・インテリジェンス（BtoB・健康経営）"
+        to: southernclouds1976@gmail.com
+        from: ニュース自動配信システム <southernclouds1976@gmail.com>
+        attachments: archive_app.csv
+        html_body: |
+          <h3>今朝の業界トレンド（BtoB・健康経営）ニュースの分析が完了しました。</h3>
+          <p>本日の分析結果（CSVファイル）をメールに添付しています。</p>
+          <p>詳細なグラフレポートや、AIによる戦略的示唆を確認する場合は、以下のWebダッシュボードへアクセスしてください。</p>
+          <a href="https://apppy-v79h69sc7q8asvhmgmdt8q.streamlit.app/">👉 業界トレンド・ダッシュボードを開く</a>
