@@ -34,3 +34,20 @@ jobs:
         git add archive_app_btc.csv
         git diff --cached --quiet || git commit -m "毎朝のBtoCトレンドニュース蓄積 [skip ci]"
         git push
+
+    - name: 6. 分析結果をメールで送信
+      uses: dawidd6/action-send-mail@v3
+      with:
+        server_address: smtp.gmail.com
+        server_port: 465
+        username: southernclouds1976@gmail.com
+        password: ${{ secrets.EMAIL_PASSWORD }}
+        subject: "【毎朝自動配信】業界トレンドニュース・インテリジェンス（BtoC・店舗ビジネス）"
+        to: southernclouds1976@gmail.com
+        from: ニュース自動配信システム <southernclouds1976@gmail.com>
+        attachments: archive_app_btc.csv
+        html_body: |
+          <h3>今朝のBtoCトレンドニュース（スポーツクラブ・店舗ビジネス）の分析が完了しました。</h3>
+          <p>本日の分析結果（CSVファイル）をメールに添付しています。</p>
+          <p>詳細なグラフレポートや、AIによる戦略的示唆を確認する場合は、以下のWebダッシュボードへアクセスしてください。</p>
+          <a href="https://apppy-v79h69sc7q8asvhmgmdt8q.streamlit.app/">👉 業界トレンド・ダッシュボードを開く</a>
