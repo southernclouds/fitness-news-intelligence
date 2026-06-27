@@ -34,3 +34,25 @@ jobs:
         git add archive.csv
         git diff --cached --quiet || git commit -m "毎朝の自動ニュース蓄積 [skip ci]"
         git push
+
+    - name: 6. 分析結果をメールで送信
+      uses: dawidd6/action-send-mail@v3
+      with:
+        # 送信に使用するメールサーバーの設定（Gmailの場合）
+        server_address: smtp.gmail.com
+        server_port: 465
+        username: southernclouds1976@gmail.com
+        password: ${{ secrets.EMAIL_PASSWORD }}
+        
+        # メールの内容設定
+        subject: "【毎朝自動配信】契約法人ニュース・インテリジェンス"
+        to: southernclouds1976@gmail.com
+        from: ニュース自動配信システム <southernclouds1976@gmail.com>
+        
+        # 毎朝生成された archive.csv（最新の分析結果）をメールにそのまま添付
+        attachments: archive.csv
+        html_body: |
+          <h3>今朝の契約法人ニュース・インテリジェンスの分析が完了しました。</h3>
+          <p>本日の分析結果（CSVファイル）をメールに添付しています。</p>
+          <p>詳細なグラフレポートや、AIによる個別企業への戦略提案・アプローチ示唆を確認する場合は、以下のWebダッシュボードへアクセスしてください。</p>
+          <a href="https://appcorporatepy-gawyfpbjomsez9t6wc4npy.streamlit.app/">👉 契約法人インテリジェンス・ダッシュボードを開く</a>
