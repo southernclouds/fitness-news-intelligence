@@ -32,6 +32,7 @@ jobs:
         git config --local user.email "action@github.com"
         git config --local user.name "GitHub Action"
         git add archive_app.csv
+        git pull --rebase origin main
         git diff --cached --quiet || git commit -m "毎朝の業界トレンドニュース蓄積 [skip ci]"
         git push
 
