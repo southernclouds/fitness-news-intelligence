@@ -1,0 +1,36 @@
+name: Daily Industry Trend Intelligence
+
+on:
+  schedule:
+    # 日本時間の朝7:05（世界標準時の22:05）に毎日実行（少し時間をずらしています）
+    - cron: '5 22 * * *'
+  workflow_dispatch: # 手動テストボタン
+
+jobs:
+  run-cron-app:
+    runs-on: ubuntu-latest
+    steps:
+    - name: 1. コードをチェックアウト
+      uses: actions/checkout@v3
+
+    - name: 2. Pythonの環境構築
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+
+    - name: 3. 必要な部品のインストール
+      run: |
+        pip install feedparser google-generativeai pandas
+
+    - name: 4. ニュース取得とAI分析の実行
+      env:
+        GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+      run: python cron_job_app.py
+
+    - name: 5. 蓄積されたCSVデータをGitHubに保存
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        git add archive_app.csv
+        git diff --cached --quiet || git commit -m "毎朝の業界トレンドニュース蓄積 [skip ci]"
+        git push
