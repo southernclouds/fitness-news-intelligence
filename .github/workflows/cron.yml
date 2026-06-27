@@ -1,0 +1,36 @@
+name: Daily Corporate News Intelligence
+
+on:
+  schedule:
+    # 世界標準時の22:00（日本時間の翌朝7:00）に毎日実行
+    - cron: '0 22 * * *'
+  workflow_dispatch: # 手動でテスト実行するためのボタンを設置
+
+jobs:
+  run-cron:
+    runs-on: ubuntu-latest
+    steps:
+    - name: 1. コードをチェックアウト
+      uses: actions/checkout@v3
+
+    - name: 2. Pythonの環境構築
+      uses: actions/setup-python@v4
+      with:
+        python-python: '3.10'
+
+    - name: 3. 必要な部品のインストール
+      run: |
+        pip install feedparser google-generativeai pandas openpyxl
+
+    - name: 4. ニュース取得とAI分析の実行
+      env:
+        GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+      run: python cron_job.py
+
+    - name: 5. 蓄積されたCSVデータをGitHubに保存
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        git add archive.csv
+        git diff --cached --quiet || git commit -m "毎朝の自動ニュース蓄積 [skip ci]"
+        git push
