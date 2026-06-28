@@ -2,8 +2,8 @@ name: Daily Corporate News Intelligence
 
 on:
   schedule:
-    # 世界標準時の22:30（日本時間の翌朝7:30）に毎日実行
-    - cron: '30 22 * * *'
+    # 世界標準時の22:20（日本時間の翌朝7:20）に毎日実行
+    - cron: '20 22 * * *'
   workflow_dispatch: # 手動でテスト実行するためのボタン
 
 # 🔐 ロボットにGitHubへの書き込み権限を明示的に与える（exit code 128 対策）
