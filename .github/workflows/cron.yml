@@ -4,7 +4,11 @@ on:
   schedule:
     # 世界標準時の22:00（日本時間の翌朝7:00）に毎日実行
     - cron: '0 22 * * *'
-  workflow_dispatch: # 手動でテスト実行するためのボタンを設置
+  workflow_dispatch: # 手動でテスト実行するためのボタン
+
+# 🔐 ロボットにGitHubへの書き込み権限を明示的に与える（exit code 128 対策）
+permissions:
+  contents: write
 
 jobs:
   run-cron:
@@ -32,25 +36,23 @@ jobs:
         git config --local user.email "action@github.com"
         git config --local user.name "GitHub Action"
         git add archive.csv
-        git pull --rebase origin main
+        # 💡 バッティング（競合）が起きても強制的に上書きして安全に前進する設定
+        git fetch origin main
+        git reset --mix origin/main
+        git add archive.csv
         git diff --cached --quiet || git commit -m "毎朝の自動ニュース蓄積 [skip ci]"
-        git push
+        git push origin main
 
     - name: 6. 分析結果をメールで送信
       uses: dawidd6/action-send-mail@v3
       with:
-        # 送信に使用するメールサーバーの設定（Gmailの場合）
         server_address: smtp.gmail.com
         server_port: 465
         username: southernclouds1976@gmail.com
         password: ${{ secrets.EMAIL_PASSWORD }}
-        
-        # メールの内容設定
         subject: "【毎朝自動配信】契約法人ニュース・インテリジェンス"
         to: southernclouds1976@gmail.com
         from: ニュース自動配信システム <southernclouds1976@gmail.com>
-        
-        # 毎朝生成された archive.csv（最新の分析結果）をメールにそのまま添付
         attachments: archive.csv
         html_body: |
           <h3>今朝の契約法人ニュース・インテリジェンスの分析が完了しました。</h3>
