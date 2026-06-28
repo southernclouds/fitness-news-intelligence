@@ -94,12 +94,12 @@ for lang in ["日本語", "英語"]:
 if all_articles:
     print(f"合計 {len(all_articles)} 件の記事をAI分析中...")
     analyzed_list = []
-    batch_size = 5
+    batch_size = 3
     for i in range(0, len(all_articles), batch_size):
         batch = all_articles[i:i+batch_size]
         analyzed_list.extend(batch_evaluate_articles(batch))
         if i + batch_size < len(all_articles):
-            time.sleep(7)
+            time.sleep(10)
             
     archive_file = "archive_app.csv"
     df_new = pd.DataFrame(analyzed_list)
