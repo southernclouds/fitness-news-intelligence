@@ -3,8 +3,6 @@ name: Daily Industry Trend Intelligence
 on:
   schedule:
     # 💡 1日3回実行：日本時間の「朝7:05」「お昼15:05」「夜23:05」
-    # 世界標準時（UTC）の 22:05、06:05、14:05 に相当します。
-    # 正確に8時間おきに実行されるため、Streamlitのスリープ（12時間制限）を確実に回避できます。
     - cron: '5 22,6,14 * * *'
   workflow_dispatch: # 手動テストボタン
 
@@ -17,10 +15,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: 1. コードをチェックアウト
-      uses: actions/checkout@v4 # 💡 Node.js 24対応の最新版
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0 # 💡 【重要】Gitの履歴をすべて取得し、exit code 128 を根本防止する
 
     - name: 2. Pythonの環境構築
-      uses: actions/setup-python@v5 # 💡 Node.js 24対応の最新版
+      uses: actions/setup-python@v5
       with:
         python-version: '3.10'
 
@@ -32,7 +32,6 @@ jobs:
     - name: 3.5. Streamlitアプリの起動確認（スリープ完全回避）
       run: |
         echo "Streamlitアプリへアクセスしてアクティブ状態を維持します..."
-        # 💡 -L を外し、無限リダイレクトによるエラーを回避
         curl -s "https://fitness-news-intelligence-b4rnfhnrtrl4uaawetmid5.streamlit.app/" > /dev/null || true
         echo "アプリの完全起動・応答を待つため、30秒待機します..."
         sleep 30
@@ -47,24 +46,21 @@ jobs:
         git config --local user.email "action@github.com"
         git config --local user.name "GitHub Action"
         
-        # 💡 強制的に最新のCSVをインデックスに追加し、リモートの最新状態と同期させる
-        git fetch origin main
-        git checkout origin/main -- archive_app.csv || true  # 既存ファイルがあれば同期、なければスルー
-        
-        # 今回Pythonが新しく作ったCSVをステージングに追加
+        # 💡 生成されたCSVファイルをステージングに追加
         git add archive_app.csv
         
-        # 💡 変更が本当にある場合のみコミットし、なければエラーにせず正常終了(exit 0)させる安全弁
+        # 💡 変更（新規作成を含む）がある場合のみ安全にコミット＆プッシュ
         if ! git diff --cached --quiet; then
           git commit -m "自動業界トレンドニュース蓄積（1日3回定期実行） [skip ci]"
+          # 履歴の競合を防ぐ安全なプルとプッシュ
           git pull --rebase origin main
-          git push origin main
+          git push origin HEAD:main
         else
           echo "変更がないためスキップします。"
         fi
 
     - name: 6. 分析結果をメールで送信
-      uses: dawidd6/action-send-mail@v4 # 💡 Node.js 24対応の最新版
+      uses: dawidd6/action-send-mail@v4
       with:
         server_address: smtp.gmail.com
         server_port: 465
