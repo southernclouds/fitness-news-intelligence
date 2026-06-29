@@ -32,7 +32,8 @@ jobs:
     - name: 3.5. Streamlitアプリの起動確認（スリープ完全回避）
       run: |
         echo "Streamlitアプリへアクセスしてアクティブ状態を維持します..."
-        curl -sL "https://fitness-news-intelligence-b4rnfhnrtrl4uaawetmid5.streamlit.app/" > /dev/null
+        # -L を外し、エラーが出ても無視して進む（|| true）
+        curl -s "https://fitness-news-intelligence-b4rnfhnrtrl4uaawetmid5.streamlit.app/" > /dev/null || true
         echo "アプリの完全起動・応答を待つため、30秒待機します..."
         sleep 30
 
