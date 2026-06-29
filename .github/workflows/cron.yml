@@ -17,10 +17,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: 1. コードをチェックアウト
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4 # 💡 v3 から v4 へ変更
 
     - name: 2. Pythonの環境構築
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5 # 💡 v4 から v5 へ変更
       with:
         python-version: '3.10'
 
@@ -32,7 +32,8 @@ jobs:
     - name: 3.5. Streamlitアプリの起動確認（スリープ完全回避）
       run: |
         echo "Streamlitアプリへアクセスしてアクティブ状態を維持します..."
-        curl -sL "https://fitness-news-intelligence-ytze2h9pnro6pkbr6fe9zf.streamlit.app/" > /dev/null
+        # 💡 -L を外し、エラーが出ても無視して進む（|| true）ように修正
+        curl -s "https://fitness-news-intelligence-ytze2h9pnro6pkbr6fe9zf.streamlit.app/" > /dev/null || true
         echo "アプリの完全起動・応答を待つため、30秒待機します..."
         sleep 30
 
@@ -54,7 +55,7 @@ jobs:
         git push origin main
 
     - name: 6. 分析結果をメールで送信
-      uses: dawidd6/action-send-mail@v3
+      uses: dawidd6/action-send-mail@v4 # 💡 v3 から v4 へ変更
       with:
         server_address: smtp.gmail.com
         server_port: 465
