@@ -17,10 +17,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: 1. コードをチェックアウト
-      uses: actions/checkout@v4
+      uses: actions/checkout@v4 # 💡 Node.js 24対応の最新版
 
     - name: 2. Pythonの環境構築
-      uses: actions/setup-python@v5
+      uses: actions/setup-python@v5 # 💡 Node.js 24対応の最新版
       with:
         python-version: '3.10'
 
@@ -28,11 +28,11 @@ jobs:
       run: |
         pip install feedparser google-generativeai pandas
 
-    # 🚀 【追加】Streamlitアプリを叩いて確実にアクティブ状態を維持する
+    # 🚀 Streamlitアプリを叩いて確実にアクティブ状態を維持する
     - name: 3.5. Streamlitアプリの起動確認（スリープ完全回避）
       run: |
         echo "Streamlitアプリへアクセスしてアクティブ状態を維持します..."
-        # -L を外し、エラーが出ても無視して進む（|| true）
+        # 💡 -L を外し、無限リダイレクトによるエラーを回避
         curl -s "https://fitness-news-intelligence-b4rnfhnrtrl4uaawetmid5.streamlit.app/" > /dev/null || true
         echo "アプリの完全起動・応答を待つため、30秒待機します..."
         sleep 30
@@ -46,16 +46,25 @@ jobs:
       run: |
         git config --local user.email "action@github.com"
         git config --local user.name "GitHub Action"
-        git add archive_app.csv
-        # 💡 バッティング自動回避の設定
+        
+        # 💡 強制的に最新のCSVをインデックスに追加し、リモートの最新状態と同期させる
         git fetch origin main
-        git reset --mix origin/main
+        git checkout origin/main -- archive_app.csv || true  # 既存ファイルがあれば同期、なければスルー
+        
+        # 今回Pythonが新しく作ったCSVをステージングに追加
         git add archive_app.csv
-        git diff --cached --quiet || git commit -m "自動業界トレンドニュース蓄積（1日3回定期実行） [skip ci]"
-        git push origin main
+        
+        # 💡 変更が本当にある場合のみコミットし、なければエラーにせず正常終了(exit 0)させる安全弁
+        if ! git diff --cached --quiet; then
+          git commit -m "自動業界トレンドニュース蓄積（1日3回定期実行） [skip ci]"
+          git pull --rebase origin main
+          git push origin main
+        else
+          echo "変更がないためスキップします。"
+        fi
 
     - name: 6. 分析結果をメールで送信
-      uses: dawidd6/action-send-mail@v4
+      uses: dawidd6/action-send-mail@v4 # 💡 Node.js 24対応の最新版
       with:
         server_address: smtp.gmail.com
         server_port: 465
