@@ -2,8 +2,10 @@ name: Daily Industry Trend Intelligence BtoC
 
 on:
   schedule:
-    # 日本時間の朝7:10（世界標準時の22:10）に毎日実行
-    - cron: '10 22 * * *'
+    # 💡 1日3回実行：日本時間の「朝7:10」「お昼15:10」「夜23:10」
+    # 世界標準時（UTC）の 22:10、06:10、14:10 に相当します。
+    # 正確に8時間おきに実行されるため、Streamlitのスリープ（12時間制限）を確実に回避できます。
+    - cron: '10 22,6,14 * * *'
   workflow_dispatch:
 
 # 🔐 ロボットにGitHubへの書き込み権限を明示的に与える
@@ -26,6 +28,14 @@ jobs:
       run: |
         pip install feedparser google-generativeai pandas
 
+    # 🚀 【追加】Streamlitアプリを叩いて確実にアクティブ状態を維持する
+    - name: 3.5. Streamlitアプリの起動確認（スリープ完全回避）
+      run: |
+        echo "Streamlitアプリへアクセスしてアクティブ状態を維持します..."
+        curl -sL "https://fitness-news-intelligence-b4rnfhnrtrl4uaawetmid5.streamlit.app/" > /dev/null
+        echo "アプリの完全起動・応答を待つため、30秒待機します..."
+        sleep 30
+
     - name: 4. ニュース取得とAI分析の実行
       env:
         GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
@@ -40,7 +50,7 @@ jobs:
         git fetch origin main
         git reset --mix origin/main
         git add archive_app_btc.csv
-        git diff --cached --quiet || git commit -m "毎朝のBtoCトレンドニュース蓄積 [skip ci]"
+        git diff --cached --quiet || git commit -m "自動BtoCトレンドニュース蓄積（1日3回定期実行） [skip ci]"
         git push origin main
 
     - name: 6. 分析結果をメールで送信
@@ -50,12 +60,12 @@ jobs:
         server_port: 465
         username: southernclouds1976@gmail.com
         password: ${{ secrets.EMAIL_PASSWORD }}
-        subject: "【毎朝自動配信】業界トレンドニュース・インテリジェンス（BtoC・店舗ビジネス）"
+        subject: "【定期自動配信】業界トレンドニュース・インテリジェンス（BtoC・店舗ビジネス）"
         to: southernclouds1976@gmail.com
         from: ニュース自動配信システム <southernclouds1976@gmail.com>
         attachments: archive_app_btc.csv
         html_body: |
-          <h3>今朝のBtoCトレンドニュース（スポーツクラブ・店舗ビジネス）の分析が完了しました。</h3>
-          <p>本日の分析結果（CSVファイル）をメールに添付しています。</p>
+          <h3>BtoCトレンドニュース（スポーツクラブ・店舗ビジネス）の最新分析が完了しました。</h3>
+          <p>現時点までの分析結果（CSVファイル）をメールに添付しています。</p>
           <p>詳細なグラフレポートや、AIによる戦略的示唆を確認する場合は、以下のWebダッシュボードへアクセスしてください。</p>
           <a href="https://fitness-news-intelligence-b4rnfhnrtrl4uaawetmid5.streamlit.app/">👉 業界トレンド・ダッシュボードを開く</a>
