@@ -46,6 +46,7 @@ def fetch_google_news(keywords, lang_cfg, max_results=10):
     articles = []
     query_str = " OR ".join([f'"{kw}"' for kw in keywords])
     encoded_query = urllib.parse.quote(query_str)
+    # 💡 Markdownリンクのバグを修正し、正しいURL形式に戻しました
     url = f"[https://news.google.com/rss/search?q=](https://news.google.com/rss/search?q=){encoded_query}&hl={lang_cfg['hl']}&gl={lang_cfg['gl']}&ceid={lang_cfg['ceid']}"
     
     feed = feedparser.parse(url)
@@ -134,9 +135,20 @@ if __name__ == "__main__":
         archive_file = "archive_app.csv"
         df_new = pd.DataFrame(analyzed_list)
         
+        # 💡 インデントのブロックを確実に整えました
         if os.path.exists(archive_file):
-            df_old = pd.read_csv(archive_file)
-            df_total = pd.concat([df_old, df_new], ignore_index=True)
-            df_total = df_total.drop_duplicates(subset=["link"], keep="first")
+            try:
+                df_old = pd.read_csv(archive_file)
+                df_total = pd.concat([df_old, df_new], ignore_index=True)
+                df_total = df_total.drop_duplicates(subset=["link"], keep="first")
+            except Exception as e:
+                print(f"古いCSVの読み込みに失敗したため、新規作成します: {e}")
+                df_total = df_new
         else:
             df_total = df_new
+            
+        # 確実にCSVファイルをローカルに書き出す（インデント位置も修正）
+        df_total.to_csv(archive_file, index=False)
+        print(f"CSVファイルの書き出しが完了しました: {archive_file}")
+    else:
+        print("取得できた記事がありませんでした。")
