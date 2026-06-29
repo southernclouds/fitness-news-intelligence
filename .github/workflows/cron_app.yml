@@ -3,8 +3,6 @@ name: Daily Industry Trend Intelligence
 on:
   schedule:
     # 💡 1日3回実行：日本時間の「朝7:05」「お昼15:05」「夜23:05」
-    # 世界標準時（UTC）の 22:05、06:05、14:05 に相当します。
-    # 正確に8時間おきに実行されるため、Streamlitのスリープ（12時間制限）を確実に回避できます。
     - cron: '5 22,6,14 * * *'
   workflow_dispatch: # 手動テストボタン
 
@@ -19,7 +17,7 @@ jobs:
     - name: 1. コードをチェックアウト
       uses: actions/checkout@v4
       with:
-        fetch-depth: 0 # 💡 Gitの履歴をすべて取得して競合エラーを防止
+        fetch-depth: 0 # Gitの履歴をすべて取得
 
     - name: 2. Pythonの環境構築
       uses: actions/setup-python@v5
@@ -34,7 +32,6 @@ jobs:
     - name: 3.5. Streamlitアプリの起動確認（スリープ完全回避）
       run: |
         echo "Streamlitアプリへアクセスしてアクティブ状態を維持します..."
-        # 💡 -L を外し、無限リダイレクトによるエラーを回避
         curl -s "https://fitness-news-intelligence-b4rnfhnrtrl4uaawetmid5.streamlit.app/" > /dev/null || true
         echo "アプリの完全起動・応答を待つため、30秒待機します..."
         sleep 30
@@ -46,32 +43,22 @@ jobs:
 
     - name: 5. 蓄積されたCSVデータをGitHubに保存
       run: |
-        git config --local user.email "action@github.com"
-        git config --local user.name "GitHub Action"
+        # 💡 コミットに必要なユーザー情報を確実に設定
+        git config --global user.email "action@github.com"
+        git config --global user.name "GitHub Action"
         
-        # 💡 1. リモートの最新状態（mainブランチ）を一度フェッチ
+        # 💡 リモートの最新状態を一度取り込む
         git fetch origin main
         
-        # 💡 2. Web上で手動削除された歴史に合わせるため、インデックスを強制同期
-        # もしリモートにファイルがなければスルーします
-        git checkout origin/main -- archive_app.csv || true
+        # 💡 Pythonが作成した新旧データを強制的にステージングに追加
+        git add -A archive_app.csv
         
-        # 💡 3. 今回Pythonが新しく生成した「スコア・コメント入りCSV」を強制追加
-        git add -f archive_app.csv
+        # 💡 複雑な分岐を廃止し、「上書きコミット ➡️ 強制上書きプッシュ」の最短ルートで実行
+        git commit -m "自動業界トレンドニュース蓄積（定期実行） [skip ci]" || echo "変更なし"
         
-        # 💡 4. 変更がある場合のみコミット
-        if ! git diff --cached --quiet; then
-          git commit -m "自動業界トレンドニュース蓄積（定期実行） [skip ci]"
-          
-          # 💡 5. リモートと歴史が衝突した場合、ローカル側（新しく作ったCSV）の変更を強制採用して合流する
-          git pull --rebase -X theirs origin main || true
-          
-          # 💡 6. 強制的にリモートのmainブランチへプッシュ
-          git push origin HEAD:main
-        else
-          echo "変更がないためスキップします。"
-        fi
-
+        # 💡 歴史の不整合を完全に無視して、現在のHEADの最新状態を強制プッシュ（--force）
+        git push --force origin HEAD:main
+        
     - name: 6. 分析結果をメールで送信
       uses: dawidd6/action-send-mail@v4
       with:
